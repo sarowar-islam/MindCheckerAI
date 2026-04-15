@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import MadeByBadge from "./components/MadeByBadge";
 import ThemeToggle from "./components/ThemeToggle";
 import LandingPage from "./pages/LandingPage";
 import QuizPage from "./pages/QuizPage";
@@ -43,6 +44,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+
+      <MadeByBadge />
     </main>
   );
 }
