@@ -1,0 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Outfit", sans-serif;
+}
+
+.card-surface {
+  @apply rounded-2xl border border-white/60 bg-white/80 p-6 shadow-soft backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/80;
+}
+
+.primary-btn {
+  @apply inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 font-medium text-white transition hover:bg-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950;
+}
+
+.secondary-btn {
+  @apply inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800;
+}
