@@ -26,27 +26,73 @@ const CONTEXTS = [
 
 export const QUESTION_COUNTS = [10, 20, 50, 100];
 
+function buildQuestion(clause, context) {
+  const clauseWithContext = context ? `${clause} ${context}` : clause;
+
+  return {
+    prompt: `I ${clauseWithContext}`,
+    clause: clauseWithContext,
+  };
+}
+
+function shuffle(items) {
+  const next = [...items];
+
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+  }
+
+  return next;
+}
+
+function buildBalancedSelection(count) {
+  const groupedByClause = BASE_CLAUSES.map((clause) =>
+    shuffle(CONTEXTS.map((context) => buildQuestion(clause, context)))
+  );
+
+  const selected = [];
+
+  while (selected.length < count) {
+    let addedInCycle = false;
+
+    for (const clauseGroup of groupedByClause) {
+      if (selected.length >= count) {
+        break;
+      }
+
+      const nextQuestion = clauseGroup.pop();
+      if (nextQuestion) {
+        selected.push(nextQuestion);
+        addedInCycle = true;
+      }
+    }
+
+    if (!addedInCycle) {
+      break;
+    }
+  }
+
+  return selected;
+}
+
 export function generateQuestions(count = 10) {
   if (!QUESTION_COUNTS.includes(count)) {
     throw new Error(`Unsupported question count: ${count}`);
   }
 
-  const questions = [];
-  let id = 1;
+  const allQuestions = BASE_CLAUSES.flatMap((clause) =>
+    CONTEXTS.map((context) => buildQuestion(clause, context))
+  );
 
-  for (const clause of BASE_CLAUSES) {
-    for (const context of CONTEXTS) {
-      const clauseWithContext = context ? `${clause} ${context}` : clause;
-      questions.push({
-        id,
-        prompt: `I ${clauseWithContext}`,
-        clause: clauseWithContext,
-      });
-      id += 1;
-    }
-  }
+  const selectedQuestions = count === allQuestions.length
+    ? shuffle(allQuestions)
+    : buildBalancedSelection(count);
 
-  return questions.slice(0, count);
+  return selectedQuestions.map((question, index) => ({
+    ...question,
+    id: index + 1,
+  }));
 }
 
 export const OPTIONS = ["Never", "Sometimes", "Often", "Always"];

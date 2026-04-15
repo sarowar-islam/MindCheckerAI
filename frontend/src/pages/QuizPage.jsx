@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProgressBar from "../components/ProgressBar";
 import QuestionCard from "../components/QuestionCard";
+import AssistantAvatar from "../components/AssistantAvatar";
 import { generateQuestions, QUESTION_COUNTS } from "../data/questions";
 import { generateMentalHealthParagraph } from "../utils/answerMapper";
 
@@ -106,7 +107,10 @@ function QuizPage() {
     <section className="mx-auto max-w-4xl space-y-6">
       {!hasStarted ? (
         <div className="card-surface space-y-5 animate-fade-up">
-          <h1 className="font-heading text-3xl font-bold">MindCheck AI Quiz Setup</h1>
+          <div className="flex items-center gap-3">
+            <AssistantAvatar size="md" className="shrink-0" />
+            <h1 className="font-heading text-3xl font-bold">MindCheck AI Quiz Setup</h1>
+          </div>
           <p className="text-slate-600 dark:text-slate-300">
             Select how many questions to answer. A higher number generally improves prediction quality.
           </p>
@@ -139,7 +143,10 @@ function QuizPage() {
       ) : (
         <>
           <div className="card-surface space-y-4">
-            <h1 className="font-heading text-3xl font-bold">MindCheck AI Quiz</h1>
+            <div className="flex items-center gap-3">
+              <AssistantAvatar size="md" className="shrink-0" />
+              <h1 className="font-heading text-3xl font-bold">MindCheck AI Quiz</h1>
+            </div>
             <p className="text-slate-600 dark:text-slate-300">
               Select the option that best matches how often you experience each statement.
             </p>
