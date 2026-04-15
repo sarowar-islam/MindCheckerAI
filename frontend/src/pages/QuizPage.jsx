@@ -6,7 +6,7 @@ import ProgressBar from "../components/ProgressBar";
 import QuestionCard from "../components/QuestionCard";
 import AssistantAvatar from "../components/AssistantAvatar";
 import { generateQuestions, QUESTION_COUNTS } from "../data/questions";
-import { generateMentalHealthParagraph } from "../utils/answerMapper";
+import { buildPredictionInput } from "../utils/answerMapper";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:5000").replace(
   /\/$/,
@@ -58,7 +58,7 @@ function QuizPage() {
       return;
     }
 
-    const generatedText = generateMentalHealthParagraph(questions, answers);
+    const { text: generatedText, severityScore } = buildPredictionInput(questions, answers);
 
     if (!generatedText.trim()) {
       setError("Not enough data to analyze. Please answer at least one question.");
@@ -72,7 +72,7 @@ function QuizPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: generatedText }),
+        body: JSON.stringify({ text: generatedText, severity_score: severityScore }),
       });
 
       const data = await response.json();

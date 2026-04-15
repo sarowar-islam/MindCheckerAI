@@ -1,12 +1,5 @@
-const NEGATIVE_ANSWER_TO_PHRASE = {
+const ANSWER_TO_PHRASE = {
   Never: "do not",
-  Sometimes: "sometimes",
-  Often: "often",
-  Always: "always",
-};
-
-const POSITIVE_ANSWER_TO_PHRASE = {
-  Never: "rarely",
   Sometimes: "sometimes",
   Often: "often",
   Always: "always",
@@ -19,12 +12,10 @@ const ANSWER_SCORE = {
   Always: 3,
 };
 
-function buildOverallMoodSentence(totalSeverity, answeredCount) {
-  if (!answeredCount) {
+function buildOverallMoodSentence(normalizedSeverity) {
+  if (normalizedSeverity == null) {
     return "";
   }
-
-  const normalizedSeverity = totalSeverity / (answeredCount * 3);
 
   if (normalizedSeverity <= 0.25) {
     return "Overall I feel happy calm and emotionally balanced most of the time.";
@@ -39,7 +30,7 @@ function buildOverallMoodSentence(totalSeverity, answeredCount) {
   return "Overall I frequently feel emotionally low and overwhelmed.";
 }
 
-export function generateMentalHealthParagraph(questions, answers) {
+export function buildPredictionInput(questions, answers) {
   let totalSeverity = 0;
   let answeredCount = 0;
 
@@ -50,26 +41,28 @@ export function generateMentalHealthParagraph(questions, answers) {
         return "";
       }
 
-      const polarity = question.polarity === "positive" ? "positive" : "negative";
       const score = ANSWER_SCORE[answer] ?? 1;
-      const symptomSeverity = polarity === "positive" ? 3 - score : score;
-
-      totalSeverity += symptomSeverity;
+      totalSeverity += score;
       answeredCount += 1;
 
-      const phraseMap = polarity === "positive"
-        ? POSITIVE_ANSWER_TO_PHRASE
-        : NEGATIVE_ANSWER_TO_PHRASE;
-      const phrase = phraseMap[answer] ?? "sometimes";
+      const phrase = ANSWER_TO_PHRASE[answer] ?? "sometimes";
 
       return `I ${phrase} ${question.clause}.`;
     })
     .filter(Boolean);
 
-  const overallMoodSentence = buildOverallMoodSentence(totalSeverity, answeredCount);
+  const normalizedSeverity = answeredCount ? totalSeverity / (answeredCount * 3) : null;
+  const overallMoodSentence = buildOverallMoodSentence(normalizedSeverity);
   if (overallMoodSentence) {
     sentences.push(overallMoodSentence);
   }
 
-  return sentences.join(" ");
+  return {
+    text: sentences.join(" "),
+    severityScore: normalizedSeverity,
+  };
+}
+
+export function generateMentalHealthParagraph(questions, answers) {
+  return buildPredictionInput(questions, answers).text;
 }

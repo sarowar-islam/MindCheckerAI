@@ -85,6 +85,32 @@ def infer_mood(prediction: str, confidence: float | None, cleaned_text: str) -> 
     return "Unclear"
 
 
+def parse_severity_score(raw_value) -> float | None:
+    if raw_value is None:
+        return None
+    try:
+        score = float(raw_value)
+    except (TypeError, ValueError):
+        return None
+    if score < 0 or score > 1:
+        return None
+    return score
+
+
+def apply_severity_calibration(
+    prediction: str, confidence: float | None, severity_score: float | None
+) -> tuple[str, float | None, bool]:
+    if severity_score is None:
+        return prediction, confidence, False
+
+    # Very low symptom intensity should map to Normal, even if keyword overlap causes noise.
+    if severity_score <= 0.12 and prediction != "Normal":
+        calibrated_confidence = max(confidence or 0.0, 0.9)
+        return "Normal", calibrated_confidence, True
+
+    return prediction, confidence, False
+
+
 def load_artifacts() -> None:
     global model, vectorizer
 
@@ -136,6 +162,7 @@ def predict() -> tuple[dict, int]:
 
     payload = request.get_json(silent=True) or {}
     input_text = payload.get("text", "")
+    severity_score = parse_severity_score(payload.get("severity_score"))
 
     if not input_text or not str(input_text).strip():
         return {"error": "Text input is required."}, 400
@@ -160,6 +187,15 @@ def predict() -> tuple[dict, int]:
             label = CLASS_LABELS.get(int(class_id), str(class_id))
             class_probabilities[label] = round(float(probability), 4)
         response["class_probabilities"] = class_probabilities
+
+    prediction, confidence, was_calibrated = apply_severity_calibration(
+        prediction, confidence, severity_score
+    )
+    response["prediction"] = prediction
+    if confidence is not None:
+        response["confidence"] = round(confidence, 4)
+    if was_calibrated:
+        response["prediction_source"] = "severity_calibrated"
 
     response["mood"] = infer_mood(prediction, confidence, cleaned)
 

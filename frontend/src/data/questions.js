@@ -1,4 +1,4 @@
-const NEGATIVE_CLAUSES = [
+const BASE_CLAUSES = [
   "feel nervous or anxious without reason",
   "have trouble sleeping",
   "feel sad or hopeless",
@@ -9,19 +9,6 @@ const NEGATIVE_CLAUSES = [
   "find it hard to concentrate",
   "feel lonely",
   "feel emotionally exhausted",
-];
-
-const POSITIVE_CLAUSES = [
-  "feel calm and emotionally balanced",
-  "enjoy my daily activities",
-  "feel hopeful about the future",
-  "sleep well and wake up refreshed",
-  "can focus on tasks without much struggle",
-  "feel connected and supported by people around me",
-  "feel motivated to do meaningful things",
-  "recover quickly after stressful moments",
-  "feel confident handling daily responsibilities",
-  "experience moments of joy during the day",
 ];
 
 const CONTEXTS = [
@@ -45,7 +32,6 @@ function buildQuestion(clause, context) {
   return {
     prompt: `I ${clauseWithContext}`,
     clause: clauseWithContext,
-    polarity: POSITIVE_CLAUSES.includes(clause) ? "positive" : "negative",
   };
 }
 
@@ -61,18 +47,8 @@ function shuffle(items) {
 }
 
 function buildBalancedSelection(count) {
-  const clauseCatalog = [
-    ...NEGATIVE_CLAUSES.map((clause) => ({ clause, polarity: "negative" })),
-    ...POSITIVE_CLAUSES.map((clause) => ({ clause, polarity: "positive" })),
-  ];
-
-  const groupedByClause = clauseCatalog.map(({ clause, polarity }) =>
-    shuffle(
-      CONTEXTS.map((context) => ({
-        ...buildQuestion(clause, context),
-        polarity,
-      }))
-    )
+  const groupedByClause = BASE_CLAUSES.map((clause) =>
+    shuffle(CONTEXTS.map((context) => buildQuestion(clause, context)))
   );
 
   const selected = [];
@@ -105,14 +81,8 @@ export function generateQuestions(count = 10) {
     throw new Error(`Unsupported question count: ${count}`);
   }
 
-  const allQuestions = [
-    ...NEGATIVE_CLAUSES.map((clause) => ({ clause, polarity: "negative" })),
-    ...POSITIVE_CLAUSES.map((clause) => ({ clause, polarity: "positive" })),
-  ].flatMap(({ clause, polarity }) =>
-    CONTEXTS.map((context) => ({
-      ...buildQuestion(clause, context),
-      polarity,
-    }))
+  const allQuestions = BASE_CLAUSES.flatMap((clause) =>
+    CONTEXTS.map((context) => buildQuestion(clause, context))
   );
 
   const selectedQuestions = count === allQuestions.length
