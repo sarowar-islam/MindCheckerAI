@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import joblib
@@ -18,7 +19,23 @@ CLASS_LABELS = {
 }
 
 app = Flask(__name__)
-CORS(app)
+
+allowed_origins_raw = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://mind-checker-ai.netlify.app,http://localhost:5173,http://127.0.0.1:5173",
+)
+ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in allowed_origins_raw.split(",")
+    if origin.strip()
+]
+
+CORS(
+    app,
+    resources={r"/*": {"origins": ALLOWED_ORIGINS}},
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 model = None
 vectorizer = None
@@ -40,9 +57,27 @@ load_artifacts()
 
 
 @app.get("/")
+def root() -> tuple[dict, int]:
+    model_status = "ready" if model is not None and vectorizer is not None else "missing_model"
+    return {
+        "service": "mindcheck-ai-backend",
+        "status": "ok",
+        "model_status": model_status,
+    }, 200
+
+
+@app.get("/health")
 def health() -> tuple[dict, int]:
-    status = "ready" if model is not None and vectorizer is not None else "missing_model"
-    return {"status": status}, 200
+    model_status = "ready" if model is not None and vectorizer is not None else "missing_model"
+    return {
+        "status": "ok",
+        "model_status": model_status,
+    }, 200
+
+
+@app.get("/healthz")
+def healthz() -> tuple[dict, int]:
+    return {"status": "ok"}, 200
 
 
 @app.post("/predict")
