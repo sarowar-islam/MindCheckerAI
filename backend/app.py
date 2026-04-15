@@ -18,6 +18,29 @@ CLASS_LABELS = {
     2: "Depression",
 }
 
+POSITIVE_HINTS = {
+    "happy",
+    "calm",
+    "balanced",
+    "hopeful",
+    "joy",
+    "motivated",
+    "refreshed",
+    "connected",
+    "stable",
+}
+
+NEGATIVE_HINTS = {
+    "anxious",
+    "nervous",
+    "stressed",
+    "sad",
+    "hopeless",
+    "overwhelmed",
+    "lonely",
+    "exhausted",
+}
+
 app = Flask(__name__)
 
 allowed_origins_raw = os.getenv(
@@ -39,6 +62,27 @@ CORS(
 
 model = None
 vectorizer = None
+
+
+def infer_mood(prediction: str, confidence: float | None, cleaned_text: str) -> str:
+    tokens = set(cleaned_text.split())
+    positive_hits = len(tokens & POSITIVE_HINTS)
+    negative_hits = len(tokens & NEGATIVE_HINTS)
+
+    if prediction == "Normal":
+        if positive_hits >= 2 and (confidence is None or confidence >= 0.4):
+            return "Happy"
+        if positive_hits >= 1 and negative_hits == 0:
+            return "Happy"
+        return "Stable"
+
+    if prediction == "Anxiety":
+        return "Anxious" if confidence is None or confidence >= 0.45 else "Mixed"
+
+    if prediction == "Depression":
+        return "Low Mood" if confidence is None or confidence >= 0.45 else "Mixed Low"
+
+    return "Unclear"
 
 
 def load_artifacts() -> None:
@@ -103,11 +147,21 @@ def predict() -> tuple[dict, int]:
     prediction = CLASS_LABELS.get(class_id, "Unknown")
 
     response = {"prediction": prediction}
+    confidence = None
 
     if hasattr(model, "predict_proba"):
         probabilities = model.predict_proba(features)[0]
-        max_confidence = float(max(probabilities))
-        response["confidence"] = round(max_confidence, 4)
+        confidence = float(max(probabilities))
+        response["confidence"] = round(confidence, 4)
+
+        classes = getattr(model, "classes_", list(range(len(probabilities))))
+        class_probabilities = {}
+        for class_id, probability in zip(classes, probabilities):
+            label = CLASS_LABELS.get(int(class_id), str(class_id))
+            class_probabilities[label] = round(float(probability), 4)
+        response["class_probabilities"] = class_probabilities
+
+    response["mood"] = infer_mood(prediction, confidence, cleaned)
 
     return jsonify(response), 200
 

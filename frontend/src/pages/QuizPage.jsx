@@ -83,7 +83,9 @@ function QuizPage() {
       navigate("/result", {
         state: {
           prediction: data.prediction,
+          mood: data.mood,
           confidence: data.confidence,
+          classProbabilities: data.class_probabilities,
           generatedText,
         },
       });

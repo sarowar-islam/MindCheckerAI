@@ -4,7 +4,9 @@ from simplemma import lemmatize
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 
-STOP_WORDS = set(ENGLISH_STOP_WORDS)
+# Keep negation cues so "I do not feel sad" is not collapsed into "feel sad".
+NEGATION_TOKENS = {"no", "not", "nor", "never"}
+STOP_WORDS = set(ENGLISH_STOP_WORDS) - NEGATION_TOKENS
 
 
 def preprocess_text(text: str) -> str:

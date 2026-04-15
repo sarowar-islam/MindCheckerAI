@@ -23,7 +23,9 @@ function ResultPage() {
     <section className="mx-auto max-w-3xl space-y-5">
       <ResultCard
         prediction={state.prediction}
+        mood={state.mood}
         confidence={state.confidence}
+        classProbabilities={state.classProbabilities}
         generatedText={state.generatedText}
       />
 
